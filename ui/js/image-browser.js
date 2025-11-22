@@ -129,7 +129,7 @@ export const imageBrowser = {
                             <b>翻译使用类型：</b>
                             <label><input type="radio" name="used_trans_type" class="zw-rdo zw-fy-type" value="0" checked />禁用</label>
                             <label><input type="radio" name="used_trans_type" class="zw-rdo zw-fy-type" value="1"/>百度翻译</label>
-                            <label><input type="radio" name="used_trans_type" class="zw-rdo zw-fy-type" value="2"/>AI8808 API_KEY翻译</label>
+                            <label><input type="radio" name="used_trans_type" class="zw-rdo zw-fy-type" value="2"/>通用AI翻译</label>
                             <button type="button" class="zw-btn zw-param-save-trans-type" style="margin-left: 21px;">保存参数</button>
                         </li>
                         <li class="zw-fy-baidu">
@@ -144,11 +144,14 @@ export const imageBrowser = {
                             <a href="https://www.ai8808.com/article/html/20250408/20250408152656.html?f=comfyui" target="_blank">申请教程</a>
                         </li>
                         <li class="zw-fy-ai8808">
-                            <b>AI8808 API_KEY</b>
+                            <b>通用AI Base URL</b>
+                            <input type="text" name="openai_base_url" class="zw-text" placeholder="例如: https://api.deepseek.com"> 
+                        </li>
+                        <li class="zw-fy-ai8808">
+                            <b>通用AI API_KEY</b>
                             <input type="text" name="tuqu_key" class="zw-text" placeholder="用于AI提示词细化或翻译或云端保存"> 
                             <button type="button" id="zw-tuqu-key" class="zw-btn">测试</button>
                             <button type="button" class="zw-btn zw-param-save-tuqu_key">保存参数</button>
-                            <a href="https://www.ai8808.com/user/register?f=comfyui" target="_blank">访问AI8808.com极速申请</a>
                         </li>
                         <li>
                             <b>AI生成文件时：</b>
@@ -1013,6 +1016,7 @@ export const imageBrowser = {
         $(".zw-param-ul").find("input[name='baidu_key']").val(jsonData.baidu_key);
         $(".zw-param-ul").find("input[name='baidu_appid']").val(jsonData.baidu_appid);
         $(".zw-param-ul").find("input[name='tuqu_key']").val(jsonData.tuqu_key);
+        $(".zw-param-ul").find("input[name='openai_base_url']").val(jsonData.openai_base_url);
         $(".zw-param-ul").find("input[name='used_trans_type'][value='"+used_trans_type+"']").prop('checked', true);
         $(".zw-param-ul").find("input[name='ignore_pre_type'][value='"+ignore_pre_type+"']").prop('checked', true);
         $(".zw-param-ul").find(".zw-select-box").find("a").removeClass("zw-a-on");
@@ -1066,6 +1070,7 @@ export const imageBrowser = {
     },
     async saveParamsTuquKey() {
         let tuqu_key = $(".zw-param-ul").find("input[name='tuqu_key']").val();
+        let openai_base_url = $(".zw-param-ul").find("input[name='openai_base_url']").val();
         if(tuqu_key == "") {
             alert("请输入API_KEY");
             return;
@@ -1073,7 +1078,8 @@ export const imageBrowser = {
 
         if(!confirm("确定保存？")) return;
         let data = {
-            tuqu_key: tuqu_key
+            tuqu_key: tuqu_key,
+            openai_base_url: openai_base_url
         };
         const res = await fetch('/zw_tools/save_params_tuqu_key',
             {

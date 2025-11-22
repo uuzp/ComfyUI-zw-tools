@@ -10,6 +10,7 @@ import threading
 baidu_appid = "baidu_appid"
 baidu_key = "baidu_key"
 tuqu_key = "tuqu_key"
+openai_base_url = "openai_base_url"
 cate_keys_default = "cate_keys_default" #默认分类
 used_trans_type = "used_trans_type" #0 禁用 1 百度 2 API_KEY
 ignore_pre_type = "ignore_pre_type" #0 保存预览图记录 1 忽略预览图记录
@@ -45,6 +46,19 @@ def update_tuqu_key(param_value):
     else:
         update_db(tuqu_key, param_value)
 
+def find_openai_base_url_param():
+    param = find_by_name_db(openai_base_url)
+    if param == None:
+        return ""
+    else:
+        return param[2]
+
+def update_openai_base_url(param_value):
+    paramOld = find_by_name_db(openai_base_url)
+    if paramOld == None:
+        insert_db(openai_base_url, param_value)
+    else:
+        update_db(openai_base_url, param_value)
 
 def find_cate_keys_default_param():
     param = find_by_name_db(cate_keys_default)

@@ -294,7 +294,7 @@
                             <b>翻译使用类型：</b>
                             <label><input type="radio" name="used_trans_type" class="zw-rdo" value="0" checked />禁用</label>
                             <label><input type="radio" name="used_trans_type" class="zw-rdo" value="1"/>百度翻译</label>
-                            <label><input type="radio" name="used_trans_type" class="zw-rdo" value="2"/>AI8808 API_KEY翻译</label>
+                            <label><input type="radio" name="used_trans_type" class="zw-rdo" value="2"/>通用AI翻译</label>
                             <button type="button" class="zw-btn zw-btn-ib-page-bar-param-save" style="margin-left: 23px;">保存参数</button>
                         </li>
                         <li>
@@ -305,11 +305,14 @@
                             <a href="https://www.ai8808.com/doc" target="_blank">申请教程</a>
                         </li>
                         <li>
-                            <b>AI8808 API_KEY：</b>
+                            <b>通用AI Base URL：</b>
+                            <input type="text" name="openai_base_url" class="zw-text" placeholder="例如: https://api.deepseek.com"> 
+                        </li>
+                        <li>
+                            <b>通用AI API_KEY：</b>
                             <input type="text" name="tuqu_key" class="zw-text" placeholder="用于云端保存或翻译或AI提示词细化"> 
                             <button type="button" id="zw-tuqu-key" class="zw-btn">测试</button>
                             <button type="button" class="zw-btn zw-btn-ib-page-bar-param-save">保存参数</button>
-                            <a href="https://www.ai8808.com" target="_blank">访问AI8808.com</a>
                         </li>
                         
                         <li>

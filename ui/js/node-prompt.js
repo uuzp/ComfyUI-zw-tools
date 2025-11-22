@@ -853,6 +853,21 @@ export const nodePrompt = {
             $("#zw-btn-ai-detail").html("AI细化");
             return;   
         }
+        
+        if (jsonData.is_direct_result) {
+            // 直接返回结果 (OpenAI/DeepSeek)
+            $("#zw-textarea-0").val(jsonData.data);
+            if(nodePrompt.cachePromptText.length >= 20){
+                nodePrompt.cachePromptText.shift();//删除第一个
+            }
+            nodePrompt.cachePromptText.push(jsonData.data);
+            nodePrompt.cachePromptIndex = nodePrompt.cachePromptText.length - 1;
+    
+            $("#zw-btn-ai-detail").html("AI细化");
+            $("#zw-btn-ai-detail").removeAttr("disabled");
+            return;
+        }
+
         let seqNo = jsonData.data;
 
         nodePrompt.aiBtnTimerCnt = 60;

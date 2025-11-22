@@ -13,8 +13,19 @@ import ffmpeg
 import re
 import time
 
-#remote_api_uri = "http://localhost:8080/ai_comfyui/"
-remote_api_uri = "https://www.ai8808.com/"
+remote_api_uri = "https://api.deepseek.com/"
+
+def get_remote_api_uri():
+    try:
+        param = find_by_name_db("openai_base_url")
+        if param and param[2] and param[2].strip() != "":
+            url = param[2].strip()
+            if not url.endswith("/"):
+                url += "/"
+            return url
+    except:
+        pass
+    return remote_api_uri
 
 def create_table():
     create_table_db()
@@ -71,7 +82,7 @@ def update_fav_status(is_fav,recordId):
 def update_upload_state(checked_ids):
     checked_ids = f'({checked_ids})'
     checked_ids = checked_ids.replace("[",'').replace("]",'')
-    update_upload_state_db(checked_ids)
+    update_upload_state_db(checked_ids, 1)
 def update_work_flow(workflow, recordId):
     update_work_flow_db(workflow, recordId)
 def update_cate_keys(cate_keys, checked_ids):
@@ -164,8 +175,8 @@ def do_upload_multi_files_by_thread(checked_ids):
 
        
 
-        url_upload_file = remote_api_uri+"api_comfyui/upload_file"
-        url_upload_info = remote_api_uri+"api_comfyui/upload_info"
+        url_upload_file = get_remote_api_uri()+"api_comfyui/upload_file"
+        url_upload_info = get_remote_api_uri()+"api_comfyui/upload_info"
 
         current_dir = os.getcwd()  
         for item in listData:
@@ -292,7 +303,7 @@ def upload_result(url_upload, api_key, base64FlowData):
 def upload_file_check(api_key):
 
     try:
-        url = remote_api_uri+"api_comfyui/upload_check"
+        url = get_remote_api_uri()+"api_comfyui/upload_check"
         print(f"####upload_check:{url}")
         headers = {    
             'x-api-key': api_key  # 将校验和作为头部发送  
@@ -314,29 +325,43 @@ def upload_file_check(api_key):
 
 def ai_prompt_detail(content):
     api_key = find_by_name_db("tuqu_key")[2]
-    url_ai_prompt_detail = remote_api_uri+"api_comfyui/ai_prompt_detail"
-    headers = {    
-            'x-api-key': api_key  # 将校验和作为头部发送  
-    } 
+    base_url = get_remote_api_uri()
+
+    # OpenAI Compatible (DeepSeek)
+    if base_url.endswith("/"):
+        url = base_url + "chat/completions"
+    else:
+        url = base_url + "/chat/completions"
+        
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
     data = {
-        'content': content,
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": "You are a prompt engineer. Please optimize the following prompt for Stable Diffusion generation. Only output the optimized prompt."},
+            {"role": "user", "content": content}
+        ],
+        "stream": False
     }
     try:
-        response = requests.post(url_ai_prompt_detail, headers=headers, json=data, timeout=60)
+        response = requests.post(url, headers=headers, json=data, timeout=60)
         if response.status_code == 200:
             resp = response.json()
-            #logger.info("上传数据成功：", resp)
-            return resp
+            if "choices" in resp and len(resp["choices"]) > 0:
+                return {"code": 0, "data": resp["choices"][0]["message"]["content"], "is_direct_result": True} 
+            else:
+                return "-100"
         else:
-            print(f"请求失败，状态码：{response.status_code}")
+            print(f"请求失败，状态码：{response.status_code}, {response.text}")
             return "-100"
-
-    except requests.exceptions.RequestException as e:
-        print(f"发生异常:{e}")
+    except Exception as e:
+        print(f"ai_prompt_detail error:{e}")
         return "-500"
 def ai_prompt_detail_query(seqNo):
     api_key = find_by_name_db("tuqu_key")[2]
-    url_ai_prompt_detail = remote_api_uri+"api_comfyui/ai_prompt_detail_query"
+    url_ai_prompt_detail = get_remote_api_uri()+"api_comfyui/ai_prompt_detail_query"
     headers = {    
             'x-api-key': api_key  # 将校验和作为头部发送  
     } 
@@ -363,28 +388,39 @@ def transCN2EN(content):
 
 
     api_key = find_by_name_db("tuqu_key")[2]
-    url_ai_prompt_detail = remote_api_uri+"api_comfyui/trans_cn_to_en"
-    headers = {    
-            'x-api-key': api_key  # 将校验和作为头部发送  
-    } 
+    base_url = get_remote_api_uri()
+    
+    # OpenAI Compatible (DeepSeek)
+    if base_url.endswith("/"):
+        url = base_url + "chat/completions"
+    else:
+        url = base_url + "/chat/completions"
+        
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
     data = {
-        'content': content,
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "system", "content": "You are a professional translator. Translate the following Chinese text to English. Only output the translated text."},
+            {"role": "user", "content": content}
+        ],
+        "stream": False
     }
     try:
-        response = requests.post(url_ai_prompt_detail, headers=headers, json=data, timeout=80)
+        response = requests.post(url, headers=headers, json=data, timeout=80)
         if response.status_code == 200:
             resp = response.json()
-            #logger.info("上传数据成功：", resp)
-            if resp["code"] == 0:
-                return resp["data"]
+            if "choices" in resp and len(resp["choices"]) > 0:
+                return resp["choices"][0]["message"]["content"]
             else:
-                return content
+                return "-100"
         else:
-            print(f"请求失败，状态码：{response.status_code}")
+            print(f"请求失败，状态码：{response.status_code}, {response.text}")
             return "-100"
-
-    except requests.exceptions.RequestException as e:
-        print(f"发生异常:{e}")
+    except Exception as e:
+        print(f"transCN2EN error:{e}")
         return "-500"
     
 def has_chinese(text):
@@ -396,28 +432,37 @@ def has_chinese(text):
         return False
 
 def api_key_test(api_key):
-    url_ai_prompt_detail = remote_api_uri+"api_comfyui/api_key_test"
-    # print(f"url_ai_prompt_detail===={url_ai_prompt_detail}, api_key===={api_key}")
-    headers = {    
-            'x-api-key': api_key  # 将校验和作为头部发送  
-    } 
+    base_url = get_remote_api_uri()
+    
+    # OpenAI Compatible (DeepSeek)
+    if base_url.endswith("/"):
+        url = base_url + "chat/completions"
+    else:
+        url = base_url + "/chat/completions"
+        
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    # Simple test request
     data = {
-        'content': "",
+        "model": "deepseek-chat",
+        "messages": [
+            {"role": "user", "content": "Hi"}
+        ],
+        "max_tokens": 5
     }
     try:
-        response = requests.post(url_ai_prompt_detail, headers=headers, json=data, timeout=40)
+        response = requests.post(url, headers=headers, json=data, timeout=40)
         if response.status_code == 200:
-            resp = response.json()
-            #logger.info("上传数据成功：", resp)
-            print(f"ZwTools:api_key_test resp===={resp}")
-            return resp
+            # If we get a 200 OK from chat completion, the key is valid
+            return {"code": 0, "data": "OK"}
         else:
-            print(f"请求失败，状态码：{response.status_code}")
-            return "-100"
-
-    except requests.exceptions.RequestException as e:
-        print(f"发生异常:{e}")
-        return "-500"
+            print(f"请求失败，状态码：{response.status_code}, {response.text}")
+            return {"code": 500, "data": f"Error: {response.status_code}"}
+    except Exception as e:
+        print(f"api_key_test error:{e}")
+        return {"code": 500, "data": "Exception"}
 
 def getCurrTime():
     # 获取当前日期和时间

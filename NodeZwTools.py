@@ -132,11 +132,13 @@ async def fetch_zw_tools_get_params(request):
     baidu_key = zw_params_biz.find_baidu_param()
     baidu_appid = zw_params_biz.find_baidu_appid_param()
     tuqu_key = zw_params_biz.find_tuqu_param()
+    openai_base_url = zw_params_biz.find_openai_base_url_param()
     cate_keys = zw_params_biz.find_cate_keys_default_param()
     used_trans_type = zw_params_biz.find_used_trans_type_param()
     ignore_pre_type = zw_params_biz.find_ignore_pre_type_param()
     return web.json_response({"baidu_key": baidu_key,
                               "tuqu_key": tuqu_key,
+                              "openai_base_url": openai_base_url,
                               "baidu_appid": str(baidu_appid),
                               "cate_keys": cate_keys,
                               "used_trans_type": used_trans_type,
@@ -166,6 +168,9 @@ async def fetch_zw_tools_save_params_tuqu_key(request):
   try:
     data = await request.json()
     tuqu_key = data["tuqu_key"]
+    if "openai_base_url" in data:
+        openai_base_url = data["openai_base_url"]
+        zw_params_biz.update_openai_base_url(openai_base_url)
    
     zw_params_biz.update_tuqu_key(tuqu_key)
     return web.json_response({"code": 0, "data": "OK"})
@@ -426,6 +431,14 @@ async def ai_prompt_detail(request):
     if resp == "-100" or resp == "-500":
       return web.json_response({"code": 500, "data": "失败，服务维护中，请稍后片刻后重试"})
     else:
+      if "is_direct_result" in resp and resp["is_direct_result"]:
+          # OpenAI 兼容模式，直接返回结果，前端需要适配
+          # 为了兼容前端轮询逻辑，这里可能需要伪造一个 seqNo 或者修改前端逻辑
+          # 但前端逻辑是：拿到 seqNo -> 轮询 query
+          # 如果我们直接返回结果，前端可能不认识
+          # 让我们看看前端 node-prompt.js
+          return web.json_response({"code": 0, "data": resp["data"], "is_direct_result": True})
+      
       if resp["code"] == 0:
         return web.json_response({"code": 0, "data": resp["data"]}) 
       else:
